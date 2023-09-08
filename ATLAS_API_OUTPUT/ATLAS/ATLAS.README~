@@ -1,0 +1,25 @@
+DOCUMENTATION:
+    PURPOSE: DES-SN data release for DES3YR cosmology analysis
+    REF: 
+    - AUTHOR:  Brout et al., 2019 (Scene Model Photometry)
+      ADS:     https://ui.adsabs.harvard.edu/abs/2019ApJ...874..106B
+    - AUTHOR:  DES Collaboration (public DR website)
+      ADS:     https://www.darkenergysurvey.org/des-year-3-supernova-cosmology-results
+    INTENT:    Nominal
+    USAGE_KEY: VERSION_PHOTOMETRY
+    USAGE_CODE: snlc_fit.exe
+    VALIDATE_SCIENCE: DES3YR analysis
+    METADATA:
+    - REDSHIFT_CMB: exact formula
+    - MWEBV: SFD98 + SF2011 correction (MWEBV_ERR/MWEBV = 0.05)
+    - VPEC: none
+    - LOGMASS: ZPEG fit with PEGASE SEDs; see Sec 3.5 of arixv:1811.02374
+    NOTES:
+    - Includes 207 photometric light curves 
+    - Includes flux-uncertainty corrections from Brout 2018, Sec 4.4
+    - Includes chromatic corrections from Burke 2018, Lasker 2018
+    VERSIONS:
+    - AUTHOR: D. Brout, R.Kessler
+      DATE:   2018-07-02
+
+DOCUMENTATION_END:

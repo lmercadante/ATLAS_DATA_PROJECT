@@ -1,0 +1,22 @@
+DOCUMENTATION:
+    PURPOSE: ATLAS SN data analysis
+    REF: 
+    - AUTHOR:  Mercadante (2023)
+      ADS:    
+    - AUTHOR:  
+      ADS:     
+    INTENT:    
+    USAGE_KEY: 
+    USAGE_CODE: snlc_fit.exe
+    VALIDATE_SCIENCE:
+    METADATA:
+    - REDSHIFT_CMB: exact formula
+    - MWEBV: SFD98 + SF2011 correction (MWEBV_ERR/MWEBV = 0.05)
+    - VPEC: none
+    - LOGMASS: ZPEG fit with PEGASE SEDs; see Sec 3.5 of arixv:1811.02374
+    NOTES:
+    VERSIONS:
+    - AUTHOR:
+      DATE:   
+
+DOCUMENTATION_END:

@@ -1,0 +1,116 @@
+import os
+import requests
+import json
+from collections import OrderedDict
+import time
+import csv
+import pandas as pd
+import time
+
+TNS                 = "sandbox.wis-tns.org"
+url_tns_api         = "https://" + TNS + "/api/get"
+
+TNS_BOT_ID          = "156355"
+TNS_BOT_NAME        = "LSM_bot"
+TNS_API_KEY         = "ba3e1918b85287f65877d241b36520a603630242"
+
+input_file = pd.read_csv('object_search_out.csv')
+object_name_list = input_file['Object Name']
+print(len(object_name_list))
+#object_id_list = input_file['Object ID']
+#object_id = object_id_list[0]
+
+
+def set_bot_tns_marker():
+    tns_marker = 'tns_marker{"tns_id": "' + str(TNS_BOT_ID) + '", "type": "bot", "name": "' + TNS_BOT_NAME + '"}'
+    return tns_marker
+
+def format_to_json(source):
+    parsed = json.loads(source, object_pairs_hook = OrderedDict)
+    #result = json.dumps(parsed, indent = 4)
+    return parsed
+
+def get():
+    get_url = url_tns_api + "/object"
+    tns_marker = set_bot_tns_marker()
+    headers = {'User-Agent': tns_marker}
+    json_file = OrderedDict(get_obj)
+    get_data = {'api_key': TNS_API_KEY, 'data': json.dumps(json_file)}
+    response = requests.post(get_url, headers = headers, data = get_data)
+    return response
+
+def jd_to_mjd(julian_date):
+    return julian_date - 2400000.5
+
+SNIa_list = []
+ra_list = []
+dec_list = []
+mjd_list = []
+z_list = []
+
+
+
+for i in range(len(object_name_list)-11828,len(object_name_list)-11228):
+    time.sleep(3)
+    object_name = object_name_list[i]
+    get_obj             = [("objname", object_name), ("objid", ""), ("photometry", "1"), ("spectra", "0")]
+
+    response = get()
+    json_data = format_to_json(response.text)
+    print (json_data)
+    json_data_dict = json_data
+    json_data_dict_lvl2 = json_data_dict['data']
+    json_data_dict_lvl3 = json_data_dict_lvl2['reply']
+    json_data_dict_lvl4 = json_data_dict_lvl3['object_type']
+    name = json_data_dict_lvl4['name']
+   # json_data_dict_lvl5 = json_data_dict_lvl3['discmagfilter']
+    json_data_dict_lvl5 = json_data_dict_lvl3['photometry']
+    json_data_dict_lvl6 = json_data_dict_lvl5[0]
+    #print(json_data_dict_lvl5)
+    #print(type(json_data_dict_lvl5))
+
+    print(name)
+    if name =='SN Ia':
+        z = json_data_dict_lvl3['redshift']
+        print(z)
+        ra = json_data_dict_lvl3['radeg']
+        print(ra)
+        dec = json_data_dict_lvl3['decdeg']
+        print(dec)
+        jd = json_data_dict_lvl6['jd']
+        print(jd)
+        mjd = jd_to_mjd(float(jd))
+        if z ==None:
+            continue
+        else:
+            SNIa_list.append(object_name)
+            ra_list.append(ra)
+            dec_list.append(dec)
+            z_list.append(z)
+            mjd_list.append(mjd)
+
+print(SNIa_list)
+print(ra_list)
+print(dec_list)
+print(mjd_list)
+print(z_list)
+
+
+
+header = ['Name','RA(deg)','DEC(deg)','MJD', 'SN_Redshift']
+
+#with open("object_get_out_50.csv", 'w') as csvfile:
+#    csvwriter = csv.writer(csvfile)
+#    csvwriter.writerow(header)
+#    for i in range(0,len(SNIa_list)):
+#        row = [str(SNIa_list[i]),str(ra_list[i]),str(dec_list[i]),str(mjd_list[i]), str(z_list[i])]
+#        csvwriter.writerow(row)
+
+
+with open("TNS_GET_OUTPUT/object_get_out_50.csv", 'w') as csvfile:
+    csvwriter = csv.writer(csvfile)
+    csvwriter.writerow(header)
+    for i in range(0,len(SNIa_list)):
+        row = [str(SNIa_list[i]),str(ra_list[i]),str(dec_list[i]),str(mjd_list[\
+i]), str(z_list[i])]
+        csvwriter.writerow(row)

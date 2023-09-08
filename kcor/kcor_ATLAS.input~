@@ -1,0 +1,20 @@
+# specify spectral template for SNIa
+SN_SED: $SNDATA_ROOT/snsed/Hsiao07.dat
+BD17_SED:    $PS1_USERS/dscolnic/Excalibur_dillon/calspec/bd_17d4708_stisnic_007.dat
+
+# specify filters :  
+MAGSYSTEM: AB
+FILTSYSTEM: COUNT
+FILTPATH:   /project2/rkessler/PRODUCTS/SNDATA_ROOT/filters/ATLAS
+SURVEY: ATLAS
+FILTER:  ATLAS-c   DECam_g.dat   0.0
+FILTER:  ATLAS-o   DECam_r.dat   0.0
+
+# number is calspec recalibration
+
+# define lambda range for SN templates; 
+# template lambda binning is used internally
+LAMBDA_RANGE: 2100 12000
+
+# define output file for kcor grid
+OUTFILE: kcor_DES_5yr_v6_1.fits

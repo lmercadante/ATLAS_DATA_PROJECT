@@ -1,0 +1,108 @@
+import io
+import os
+import sys
+import time
+import numpy as np
+import pandas as pd
+import requests
+import csv
+
+#reading in data frame
+df1 = pd.read_csv('TNS_GET_OUTPUT/object_get_out_50.csv')
+RA_list = df1['RA(deg)']   # list of RA values in deg
+DEC_list = df1['DEC(deg)'] # list of DEC values in deg
+dates_list = df1['MJD']   # dates in mjd
+names = df1['Name']   # names of supernova
+list_length = np.arange(0,len(names),1)
+#print(len(names))
+BASEURL = "https://fallingstar-data.com/forcedphot"
+
+ATLAS_files_list = []
+names_pass = []
+
+resp = requests.post(url=f"{BASEURL}/api-token-auth/", data={'username':" lmercadante", 'password': "Supernovas2000"})
+if resp.status_code == 200:
+    token = resp.json()['token']
+    print(f'Your token is {token}')
+    headers = {'Authorization': f'Token {token}', 'Accept': 'application/json'}
+else:
+    print(f'ERROR {resp.status_code}')
+    print(resp.json())
+
+output_list = open("ATLAS_API_OUTPUT/RAW_DATA/file_list.csv", 'w')
+header = ['File_Name', 'SN_Name']
+csvwriter = csv.writer(output_list)
+csvwriter.writerow(header)
+
+for i in range(0,len(names),1):
+    print(RA_list[i], DEC_list[i])
+    task_url = None
+    while not task_url:
+        with requests.Session() as s:
+            resp = s.post(f"{BASEURL}/queue/", headers=headers, data={'ra': RA_list[i], 'dec': DEC_list[i], 'mjd_min': dates_list[i]-50.0, 'mjd_max':dates_list[i]+210.0,'send_email': False})
+
+            if resp.status_code == 201:  # successfully queued
+                task_url = resp.json()['url']
+                print(f'The task URL is {task_url}')
+            elif resp.status_code == 429:  # throttled
+                message = resp.json()["detail"]
+                print(f'{resp.status_code} {message}')
+                t_sec = re.findall(r'available in (\d+) seconds', message)
+                t_min = re.findall(r'available in (\d+) minutes', message)
+                if t_sec:
+                    waittime = int(t_sec[0])
+                elif t_min:
+                    waittime = int(t_min[0]) * 60
+                else:
+                    waittime = 10
+                print(f'Waiting {waittime} seconds')
+                time.sleep(waittime)
+            else:
+                print(f'ERROR {resp.status_code}')
+                print(resp.json())
+                sys.exit()
+    result_url = None
+    while not result_url:
+        with requests.Session() as s:
+            resp = s.get(task_url, headers=headers)
+
+            if resp.status_code == 200:  # HTTP OK
+                if resp.json()['finishtimestamp']:
+                    result_url = resp.json()['result_url']
+                    print(f"Task is complete with results available at {result_url}")
+                    break
+                elif resp.json()['starttimestamp']:
+                    print(f"Task is running (started at {resp.json()['starttimestamp']})")
+                else:
+                    print("Waiting for job to start. Checking again in 10 seconds...")
+                time.sleep(10)
+            else:
+                print(f'ERROR {resp.status_code}')
+                print(resp.json())
+                sys.exit()
+                print("RESULT URL:", result_url)
+    if result_url ==None:
+        continue
+    with requests.Session() as s:
+        textdata = s.get(result_url, headers=headers).text
+
+    # if we'll be making a lot of requests, keep the web queue from being
+    # cluttered (and reduce server storage usage) by sending a delete operation
+    # s.delete(task_url, headers=headers).json()
+    dfresult = pd.read_csv(io.StringIO(textdata.replace("###", "")), delim_whitespace=True)
+    print(type(dfresult))
+    dfresult.to_csv('ATLAS_API_OUTPUT/RAW_DATA/{}.csv'.format(names[i]))
+    print(dfresult)
+    filename = '{}.csv'.format(names[i])
+    row = [filename,names[i]]
+    csvwriter.writerow(row)
+    #ATLAS_files_list.append(filename)
+    #names_pass.append(names[i])
+
+#with open("ATLAS_API_OUTPUT/RAW_DATA/file_list.csv", 'w') as csvfile:
+#    header = ['File_Name', 'SN_Name']
+#    csvwriter = csv.writer(csvfile)
+#    csvwriter.writerow(header)
+#    for i in range(0,len(ATLAS_files_list)):
+#        row = [ATLAS_files_list[i],names_pass[i]]
+#        csvwriter.writerow(row)

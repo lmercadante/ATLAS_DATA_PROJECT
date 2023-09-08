@@ -1,0 +1,59 @@
+ALIAS:
+  NUMS: &nums
+      NGEN_UNIT: 1.0
+
+DATAPREP:
+  ATLAS:
+    OPTS:
+    
+      # Location of the photometry files
+      RAW_DIR: $LSST_USERS/lmercadante/ATLAS_DATA_PROJECT/ATLAS_API_OUTPUT/ATLAS
+      
+      # Specify which types are confirmed Ia's, confirmed CC or unconfirmed. Used by ML down the line
+      TYPES:
+        IA: [101, 1]
+        NONIA: [20, 30, 120, 130]
+
+      # Blind the data. Defaults to True if SIM:True not set
+      BLIND: False
+      
+      # Defaults to False. Important to set this flag if analysing a sim in the same way as data, as there
+      # are some subtle differences
+      SIM: False
+
+      # The method of estimating peak mjd values. Don't ask me what numbers mean what, ask Rick.
+      OPT_SETPKMJD: 16
+
+LCFIT:
+  DESFITSYS:
+    BASE: $LSST_USERS/lmercadante/ATLAS_DATA_PROJECT/ATLAS.nml
+    MASK: ATLAS
+    SNLCINP:
+      ROOTFILE_OUT: 'temp.root'
+      SNTABLE_LIST: 'FITRES LCPLOT(text:key)'
+    OPTS:
+      BATCH_INFO: sbatch $SBATCH_TEMPLATES/SBATCH_Midway2a.TEMPLATE 10
+      
+
+CLASSIFICATION:
+  PERFECT:
+    CLASSIFIER: PerfectClassifier
+    MASK_SIM: DESSIM_
+    MODE: predict
+  SNN_WITH_Z:
+    CLASSIFIER: SuperNNovaClassifier
+    MODE: predict
+    MASK_SIM: DESSIM_
+    OPTS:
+      MODEL: /scratch/midway2/rkessler/PIPPIN_OUTPUT/MV_TRAINDES/3_CLAS/SNNTRAINV19_z_TRAINDES_V19/model.pt
+      VARIANT: vanilla # or "variational" or "bayesian". Defaults to "vanilla"
+      REDSHIFT: True  # Use redshift info when classifying. Defaults to True.
+      NORM: cosmo  # How to normalise LCs. Other options are "perfilter" or "cosmo".
+  SCONE:
+    CLASSIFIER: SconeClassifier
+    MODE: predict
+    MASK_SIM: DESSIM_
+    OPTS:
+      MODEL: /project2/rkessler/SURVEYS/DES/USERS/helenqu/pippin_config/des/host_mismatch_bcor_trained_scone/
+      HEATMAPS_BATCH_FILE: $SBATCH_TEMPLATES/SBATCH_Midway2a.TEMPLATE
+  
